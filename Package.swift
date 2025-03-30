@@ -3,19 +3,30 @@
 
 import PackageDescription
 
+private let packageName = "TAPurchase"
+
 let package = Package(
-    name: "TAPurchasing",
+    name: packageName,
+    platforms: [
+        .iOS(.v15),
+        .macOS(.v14)
+    ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "TAPurchasing",
-            targets: ["TAPurchasing"]),
+            name: packageName,
+            targets: [packageName]),
+    ],
+    dependencies: [
+        .package(url: "git@github.com:TechArtists/ios-analytics.git", .upToNextMajor(from: "0.9.0")),
+        .package(url: "git@github.com:TechArtists/ios-debug-tools.git", .upToNextMajor(from: "0.9.0"))
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "TAPurchasing"),
-
+            name: packageName,
+            dependencies: [
+                .product(name: "TAAnalytics", package: "ios-analytics"),
+                .product(name: "TADebugTools", package: "ios-debug-tools"),
+            ]
+        ),
     ]
 )

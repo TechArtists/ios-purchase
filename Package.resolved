@@ -1,0 +1,24 @@
+{
+  "originHash" : "6943e6b9ff959774a58a196de60f5b0e328c73a35faefbfc41e9c21a9a4b2679",
+  "pins" : [
+    {
+      "identity" : "ios-analytics",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:TechArtists/ios-analytics.git",
+      "state" : {
+        "revision" : "a7b83a56e97b906791b1e00573d2467d2b932d7f",
+        "version" : "0.9.9"
+      }
+    },
+    {
+      "identity" : "ios-debug-tools",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:TechArtists/ios-debug-tools.git",
+      "state" : {
+        "revision" : "b403e40be9a05e7d3e27ae5e3a1e3d766151a0df",
+        "version" : "0.9.3"
+      }
+    }
+  ],
+  "version" : 3
+}
