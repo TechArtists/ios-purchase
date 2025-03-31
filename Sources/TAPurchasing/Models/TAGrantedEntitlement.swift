@@ -9,13 +9,13 @@ import Foundation
 
 public struct TAGrantedEntitlement: Sendable, Identifiable {
     
-    /// Unique ID for the transaction.
+    /// Unique ID for the entitlement.
     public let id: String
-    /// Identifies the product the transaction is for.
+    /// Identifies the product the entitlement is for.
     public let productID: String
-    /// The date this transaction occurred on.
+    /// The date this entitlement occurred on.
     public let latestPurchaseDate: Date?
-    /// The date the original transaction for `productID` or`subscriptionGroupID` occurred on.
+    /// The date the original entitlement for `productID` or`subscriptionGroupID` occurred on.
     public let originalPurchaseDate: Date?
     /// The date the users access to `productID` expires
     /// - Note: Only for subscriptions.
