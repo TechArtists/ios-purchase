@@ -10,7 +10,7 @@ import TAAnalytics
 import Combine
 
 @MainActor
-public class TAPurchase: ObservableObject {
+open class TAPurchase: ObservableObject {
     
     private let service: TAPurchaseAdaptorProtocol
     private let analytics: TAAnalytics

@@ -9,7 +9,7 @@ import StoreKit
 import Foundation
 import Combine
 
-public struct StoreKitPurchaseAdaptor: TAPurchaseAdaptorProtocol {
+public struct TAPurchaseAdaptorStoreKit: TAPurchaseAdaptorProtocol {
     
     enum PurchaseError: LocalizedError {
         case productNotFound
