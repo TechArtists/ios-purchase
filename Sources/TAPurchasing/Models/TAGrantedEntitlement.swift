@@ -31,16 +31,4 @@ public struct TAGrantedEntitlement: Sendable, Identifiable {
         self.expirationDate = expirationDate
         self.isActive = isActive
     }
-    
-    public var eventParameters: [String: Any] {
-        let dict: [String: Any?] = [
-            "entitlement_id": id,
-            "entitlement_productId": productID,
-            "entitlement_latestPurchaseDate": latestPurchaseDate,
-            "entitlement_originalPurchaseDate": originalPurchaseDate,
-            "entitlement_expirationDate": expirationDate,
-            "entitlement_isActive.": isActive
-        ]
-        return dict.compactMapValues({ $0 })
-    }
 }

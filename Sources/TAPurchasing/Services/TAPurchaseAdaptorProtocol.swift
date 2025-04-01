@@ -15,6 +15,7 @@ public protocol TAPurchaseAdaptorProtocol: Sendable {
     func restorePurchase() async throws -> [TAGrantedEntitlement]
     func getGrantedEntitlements() async throws -> [TAGrantedEntitlement]
     func getProducts(for productIDs: [String]) async throws -> [TAProduct]
+    func checkTrialEligibility(productID: String) async throws -> Bool
     
     var grantedEntitlementsUpdatePublisher: AnyPublisher<[TAGrantedEntitlement], Never> { get }
 }

@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:TechArtists/ios-analytics.git",
       "state" : {
-        "revision" : "a7b83a56e97b906791b1e00573d2467d2b932d7f",
-        "version" : "0.9.9"
+        "revision" : "aed88aa0262eed284c649c8ef98d700ce615ad29",
+        "version" : "0.9.10"
       }
     },
     {

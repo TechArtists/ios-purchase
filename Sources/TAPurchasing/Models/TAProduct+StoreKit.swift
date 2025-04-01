@@ -10,15 +10,15 @@ import TAAnalytics
 
 public extension TAProduct {
 
-    init(storeKitProduct product: StoreKit.Product) {
+    init(storeKitProduct product: StoreKit.Product, isEligibleForIntroOffer: Bool) {
         self.init(
             id: product.id,
             title: product.displayName,
             subtitle: product.description,
-            price: product.price,
+            price: Float(truncating: product.price as NSNumber),
             displayPrice: product.displayPrice,
             productDuration: ProductLifetime(unit: product.subscription?.subscriptionPeriod.unit),
-            subscriptionType: .from(storeKitProduct: product),
+            subscriptionType: .determine(for: product, isEligibleForIntroOffer: isEligibleForIntroOffer),
             currency: "\(product.priceFormatStyle.currencyCode)"
         )
     }
@@ -47,11 +47,14 @@ extension ProductLifetime {
 }
 
 extension TASubscriptionType {
-    static func from(storeKitProduct product: StoreKit.Product) -> TASubscriptionType {
+    static func determine(for product: Product, isEligibleForIntroOffer: Bool) -> TASubscriptionType {
         switch product.type {
         case .autoRenewable:
-            if let subscription = product.subscription {
-                if let introductoryOffer = subscription.introductoryOffer {
+            guard let subscription = product.subscription else {
+                return .other("auto-renewable-subscription-missing-info")
+            }
+            if let introductoryOffer = subscription.introductoryOffer {
+                if isEligibleForIntroOffer {
                     switch introductoryOffer.paymentMode {
                     case .freeTrial:
                         return .trial
@@ -66,7 +69,7 @@ extension TASubscriptionType {
                     return .paidRegular
                 }
             } else {
-                return .other("auto-renewable subscription missing info")
+                return .paidRegular
             }
         case .nonRenewable:
             return .paidPayUpFront

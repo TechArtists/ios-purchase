@@ -11,10 +11,12 @@ import Combine
 
 public struct StoreKitPurchaseAdaptor: TAPurchaseAdaptorProtocol {
     
-    enum Error: LocalizedError {
+    enum PurchaseError: LocalizedError {
         case productNotFound
         case userCancelledPurchase
         case failedToPurchase
+        case pending
+        case successUnverified(Error)
     }
     
     public var grantedEntitlementsUpdatePublisher: AnyPublisher<[TAGrantedEntitlement], Never>
@@ -42,29 +44,40 @@ public struct StoreKitPurchaseAdaptor: TAPurchaseAdaptorProtocol {
     }
     
     public func purchaseProduct(productID: String) async throws -> [TAGrantedEntitlement] {
-        do {
-            let products = try await Product.products(for: [productID])
+        let products = try await Product.products(for: [productID])
 
-            guard let product = products.first else {
-                throw Error.productNotFound
-            }
-
-            let result = try await product.purchase()
-
-            switch result {
-            case .success(let verificationResult):
-                let transaction = try verificationResult.payloadValue
-                await transaction.finish()
-
-                return try await getGrantedEntitlements()
-            case .userCancelled:
-                throw Error.userCancelledPurchase
-            default:
-                throw Error.failedToPurchase
-            }
-        } catch {
-            throw error
+        guard let product = products.first else {
+            throw PurchaseError.productNotFound
         }
+
+        let result = try await product.purchase()
+
+        switch result {
+        case let .success(.verified(transaction)):
+            await transaction.finish()
+            return try await getGrantedEntitlements()
+        case let .success(.unverified(_, error)):
+            // Successful purchase but transaction/receipt can't be verified
+            throw PurchaseError.successUnverified(error)
+        case .pending:
+            // Transaction waiting on SCA or approval from Ask to Buy
+            throw PurchaseError.pending
+        case .userCancelled:
+            throw PurchaseError.userCancelledPurchase
+        @unknown default:
+            throw PurchaseError.failedToPurchase
+        }
+    }
+    
+    public func checkTrialEligibility(productID: String) async throws -> Bool {
+        let products = try await Product.products(for: [productID])
+        
+        guard let product = products.first, let subscriptionInfo = product.subscription else {
+            throw PurchaseError.productNotFound
+        }
+        
+        let eligibility = await subscriptionInfo.isEligibleForIntroOffer
+        return eligibility
     }
     
     public func restorePurchase() async throws -> [TAGrantedEntitlement] {
@@ -105,6 +118,20 @@ public struct StoreKitPurchaseAdaptor: TAPurchaseAdaptorProtocol {
     
     public func getProducts(for productIDs: [String]) async throws -> [TAProduct] {
         let products = try await Product.products(for: productIDs)
-        return products.map({ TAProduct(storeKitProduct: $0) })
+        
+        return try await withThrowingTaskGroup(of: TAProduct.self) { group in
+            for product in products {
+                group.addTask {
+                    let isEligibleForIntroOffer = try await checkTrialEligibility(productID: product.id)
+                    return TAProduct(storeKitProduct: product, isEligibleForIntroOffer: isEligibleForIntroOffer)
+                }
+            }
+            
+            var results: [TAProduct] = []
+            for try await taProduct in group {
+                results.append(taProduct)
+            }
+            return results
+        }
     }
 }

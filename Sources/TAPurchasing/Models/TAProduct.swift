@@ -13,7 +13,7 @@ public struct TAProduct: Identifiable, Sendable {
     public let id: String
     public let title: String
     public let subtitle: String
-    public let price: Decimal
+    public let price: Float
     public let displayPrice: String
     public let productDuration: ProductLifetime?
     public let subscriptionType: TASubscriptionType
@@ -23,7 +23,7 @@ public struct TAProduct: Identifiable, Sendable {
         id: String,
         title: String,
         subtitle: String,
-        price: Decimal,
+        price: Float,
         displayPrice: String,
         productDuration: ProductLifetime?,
         subscriptionType: TASubscriptionType,
@@ -45,18 +45,6 @@ public struct TAProduct: Identifiable, Sendable {
         } else {
             return "\(displayPrice)"
         }
-    }
-
-    public var eventParameters: [String: Any] {
-        let dict: [String: Any?] = [
-            "product_id": id,
-            "product_title": title,
-            "product_subtitle": subtitle,
-            "product_price_string": displayPrice,
-            "product_product_duration": productDuration?.rawValue,
-            "product_currency": currency
-        ]
-        return dict.compactMapValues { $0 }
     }
 }
 

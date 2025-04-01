@@ -17,13 +17,9 @@ public class TAPurchase: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    public private(set) var entitlements: [TAGrantedEntitlement] = []
-
-    private var transactionsUpdateStreamTask: Task<Void, Never>?
+    @Published public private(set) var entitlements: [TAGrantedEntitlement] = []
     
     @Published public private(set) var purchaseIsLoading: Bool = false
-    
-    @Published public private(set) var availableProducts: [TAProduct] = []
     
     /// Initializes a new `TAPurchase` instance.
     /// - Parameters:
@@ -32,10 +28,6 @@ public class TAPurchase: ObservableObject {
     public init(service: TAPurchaseAdaptorProtocol, analytics: TAAnalytics) {
         self.analytics = analytics
         self.service = service
-    }
-    
-    deinit {
-        transactionsUpdateStreamTask?.cancel()
     }
     
     /// Starts listening for transaction updates and automatically updates entitlements.
@@ -52,11 +44,15 @@ public class TAPurchase: ObservableObject {
     /// - Parameter productID: The identifier of the product to purchase.
     /// - Returns: An array of updated granted entitlements.
     @discardableResult
-    public func purchaseProduct( productID: String) async throws -> [TAGrantedEntitlement] {
+    public func purchaseProduct( productID: String, paywall: TAPaywallAnalytics) async throws -> [TAGrantedEntitlement] {
         purchaseIsLoading = true
         
         do {
             entitlements = try await service.purchaseProduct(productID: productID)
+            if let product = try await service.getProducts(for: [productID]).first {
+                let isEligible = try await checkTrialEligibility(productID: productID)
+                trackSubscriptionStart(for: product, paywall: paywall, isEligibleForIntroOffer: isEligible)
+            }
             purchaseIsLoading = false
             return entitlements
         } catch {
@@ -70,8 +66,13 @@ public class TAPurchase: ObservableObject {
     /// - Returns: An array of `TAProduct` objects.
     public func getProducts( productIDs: [String]) async throws -> [TAProduct] {
         let products = try await service.getProducts(for: productIDs)
-        availableProducts = products
         return products
+    }
+    
+    /// Checks if Product with `productID` is eligible for trial
+    /// - Parameter productID: The product identifier.
+    public func checkTrialEligibility(productID: String) async throws -> Bool {
+        try await service.checkTrialEligibility(productID: productID)
     }
     
     /// Restores previous purchases and returns the user's entitlements.
@@ -81,30 +82,50 @@ public class TAPurchase: ObservableObject {
         do {
             entitlements = try await service.restorePurchase()
             updateEntitlements(with: entitlements)
-//            if let productID = entitlements.first?.productID {
-//
-//            }
-//            analytics.trackSubscriptionRestore(
-//                TASubscriptionStartAnalyticsImpl(
-//                    subscriptionType: <#T##TASubscriptionType#>,
-//                    paywall: paywall,
-//                    productID: <#T##String#>,
-//                    price: <#T##Float#>,
-//                    currency: <#T##String#>
-//                )
-//            )
+            
+            if let productID = entitlements.first?.productID {
+                let products = try await getProducts(productIDs: [productID])
+                guard let product = products.first else { return entitlements }
+
+                analytics.trackSubscriptionRestore(
+                    TASubscriptionStartAnalyticsImpl(
+                        subscriptionType: product.subscriptionType,
+                        paywall: paywall,
+                        productID: product.id,
+                        price: Float(product.price),
+                        currency: product.currency
+                    )
+                )
+            }
             return entitlements
         } catch {
-            
             throw error
         }
     }
     
-    /// Updates the local entitlements list by sorting them by expiration date.
-    /// - Parameter entitlements: The updated entitlements to be stored.
     private func updateEntitlements(with entitlements: [TAGrantedEntitlement]) {
         self.entitlements = entitlements.sorted {
             ($0.expirationDate ?? .distantPast) > ($1.expirationDate ?? .distantPast)
+        }
+    }
+    
+    private func trackSubscriptionStart(for product: TAProduct, paywall: TAPaywallAnalytics, isEligibleForIntroOffer: Bool) {
+
+        let event = TASubscriptionStartAnalyticsImpl(
+            subscriptionType: product.subscriptionType,
+            paywall: paywall,
+            productID: product.id,
+            price: Float(product.price),
+            currency: product.currency
+        )
+
+        switch product.subscriptionType {
+        case .paidRegular:
+            analytics.trackSubscriptionStartPaidRegular(event)
+        case .trial, .paidPayAsYouGo, .paidPayUpFront:
+            analytics.trackSubscriptionStartIntro(event)
+        default:
+            break
         }
     }
 }
