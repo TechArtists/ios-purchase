@@ -15,7 +15,7 @@ open class TAPurchase: ObservableObject {
     private let service: TAPurchaseAdaptorProtocol
     private let analytics: TAAnalytics
     
-    private var cancellables = Set<AnyCancellable>()
+    open var cancellables = Set<AnyCancellable>()
     
     @Published public private(set) var entitlements: [TAGrantedEntitlement] = []
     
