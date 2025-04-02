@@ -122,8 +122,7 @@ public struct TAPurchaseAdaptorStoreKit: TAPurchaseAdaptorProtocol {
         return try await withThrowingTaskGroup(of: TAProduct.self) { group in
             for product in products {
                 group.addTask {
-                    let isEligibleForIntroOffer = try await checkTrialEligibility(productID: product.id)
-                    return TAProduct(storeKitProduct: product, isEligibleForIntroOffer: isEligibleForIntroOffer)
+                    return TAProduct(storeKitProduct: product)
                 }
             }
             

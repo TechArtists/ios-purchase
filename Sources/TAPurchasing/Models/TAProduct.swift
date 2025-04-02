@@ -7,6 +7,7 @@
 
 import Foundation
 import TAAnalytics
+import StoreKit
 
 public struct TAProduct: Identifiable, Sendable {
     
@@ -16,8 +17,8 @@ public struct TAProduct: Identifiable, Sendable {
     public let price: Float
     public let displayPrice: String
     public let productDuration: ProductLifetime?
-    public let subscriptionType: TASubscriptionType
     public let currency: String
+    public let storeKitProduct: Product
 
     public init(
         id: String,
@@ -26,8 +27,8 @@ public struct TAProduct: Identifiable, Sendable {
         price: Float,
         displayPrice: String,
         productDuration: ProductLifetime?,
-        subscriptionType: TASubscriptionType,
-        currency: String
+        currency: String,
+        storeKitProduct: Product
     ) {
         self.id = id
         self.title = title
@@ -35,7 +36,7 @@ public struct TAProduct: Identifiable, Sendable {
         self.price = price
         self.displayPrice = displayPrice
         self.productDuration = productDuration
-        self.subscriptionType = subscriptionType
+        self.storeKitProduct = storeKitProduct
         self.currency = currency
     }
 

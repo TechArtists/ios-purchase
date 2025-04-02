@@ -79,28 +79,27 @@ open class TAPurchase: ObservableObject {
     /// - Returns: An array of granted entitlements.
     @discardableResult
     public func restorePurchase( paywall: TAPaywallAnalytics) async throws -> [TAGrantedEntitlement] {
-        do {
-            entitlements = try await service.restorePurchase()
-            updateEntitlements(with: entitlements)
+        entitlements = try await service.restorePurchase()
+        updateEntitlements(with: entitlements)
+        
+        if let productID = entitlements.first?.productID {
+            let products = try await getProducts(productIDs: [productID])
+            guard let product = products.first else { return entitlements }
             
-            if let productID = entitlements.first?.productID {
-                let products = try await getProducts(productIDs: [productID])
-                guard let product = products.first else { return entitlements }
+            let isEligibleForIntroOffer = try await checkTrialEligibility(productID: productID)
+            let subscriptionType = TASubscriptionType.determine(for: product.storeKitProduct, isEligibleForIntroOffer: isEligibleForIntroOffer)
 
-                analytics.trackSubscriptionRestore(
-                    TASubscriptionStartAnalyticsImpl(
-                        subscriptionType: product.subscriptionType,
-                        paywall: paywall,
-                        productID: product.id,
-                        price: Float(product.price),
-                        currency: product.currency
-                    )
+            analytics.trackSubscriptionRestore(
+                TASubscriptionStartAnalyticsImpl(
+                    subscriptionType: subscriptionType,
+                    paywall: paywall,
+                    productID: product.id,
+                    price: Float(product.price),
+                    currency: product.currency
                 )
-            }
-            return entitlements
-        } catch {
-            throw error
+            )
         }
+        return entitlements
     }
     
     private func updateEntitlements(with entitlements: [TAGrantedEntitlement]) {
@@ -110,16 +109,18 @@ open class TAPurchase: ObservableObject {
     }
     
     private func trackSubscriptionStart(for product: TAProduct, paywall: TAPaywallAnalytics, isEligibleForIntroOffer: Bool) {
+        
+        let subscriptionType = TASubscriptionType.determine(for: product.storeKitProduct, isEligibleForIntroOffer: isEligibleForIntroOffer)
 
         let event = TASubscriptionStartAnalyticsImpl(
-            subscriptionType: product.subscriptionType,
+            subscriptionType: subscriptionType,
             paywall: paywall,
             productID: product.id,
             price: Float(product.price),
             currency: product.currency
         )
 
-        switch product.subscriptionType {
+        switch subscriptionType {
         case .paidRegular:
             analytics.trackSubscriptionStartPaidRegular(event)
         case .trial, .paidPayAsYouGo, .paidPayUpFront:

@@ -10,7 +10,7 @@ import TAAnalytics
 
 public extension TAProduct {
 
-    init(storeKitProduct product: StoreKit.Product, isEligibleForIntroOffer: Bool) {
+    init(storeKitProduct product: StoreKit.Product) {
         self.init(
             id: product.id,
             title: product.displayName,
@@ -18,8 +18,8 @@ public extension TAProduct {
             price: Float(truncating: product.price as NSNumber),
             displayPrice: product.displayPrice,
             productDuration: ProductLifetime(unit: product.subscription?.subscriptionPeriod.unit),
-            subscriptionType: .determine(for: product, isEligibleForIntroOffer: isEligibleForIntroOffer),
-            currency: "\(product.priceFormatStyle.currencyCode)"
+            currency: "\(product.priceFormatStyle.currencyCode)",
+            storeKitProduct: product
         )
     }
 }
