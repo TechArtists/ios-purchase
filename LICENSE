@@ -1,4 +1,3 @@
-/*
 MIT License
 
 Copyright (c) 2025 Tech Artists Agency
@@ -20,26 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-*/
-
-//
-//  TAPurchaseServiceProtocol.swift
-//  TAPPurchase
-//
-//  Created by Robert Tataru on 27.03.2025.
-//
-
-import Foundation
-import Combine
-
-@MainActor
-public protocol TAPurchaseAdaptorProtocol: Sendable {
-    
-    func purchaseProduct(productID: String) async throws -> [TAGrantedEntitlement]
-    func restorePurchase() async throws -> [TAGrantedEntitlement]
-    func getGrantedEntitlements() async throws -> [TAGrantedEntitlement]
-    func getProducts(for productIDs: [String]) async throws -> [TAProduct]
-    func checkTrialEligibility(productID: String) async throws -> Bool
-    
-    var grantedEntitlementsUpdatePublisher: AnyPublisher<[TAGrantedEntitlement], Never> { get }
-}
